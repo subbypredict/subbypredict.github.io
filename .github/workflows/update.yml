@@ -13,133 +13,137 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-  - name: Get repository
-    uses: actions/checkout@v4
+      - name: Get repository
+        uses: actions/checkout@v4
 
-  - name: Get football matches
-    env:
-      SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
-    run: |
-      TODAY=$(date -u +%Y-%m-%d)
-      DAY2=$(date -u -d "+1 day" +%Y-%m-%d)
+      - name: Get football matches
+        env:
+          SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          DAY2=$(date -u -d "+1 day" +%Y-%m-%d)
 
-      curl -fsSL \
-        -H "x-apisports-key: $SPORTS_API_KEY" \
-        "https://v3.football.api-sports.io/fixtures?date=$TODAY" \
-        -o football1.json
+          curl -fsSL \
+            -H "x-apisports-key: $SPORTS_API_KEY" \
+            "https://v3.football.api-sports.io/fixtures?date=$TODAY" \
+            -o football1.json
 
-      curl -fsSL \
-        -H "x-apisports-key: $SPORTS_API_KEY" \
-        "https://v3.football.api-sports.io/fixtures?date=$DAY2" \
-        -o football2.json
+          curl -fsSL \
+            -H "x-apisports-key: $SPORTS_API_KEY" \
+            "https://v3.football.api-sports.io/fixtures?date=$DAY2" \
+            -o football2.json
 
-      jq -s '
-        {
-          get: {
-            parameters: {
-              dates: [
-                .[0].parameters.date,
-                .[1].parameters.date
-              ]
+          jq -s '
+            {
+              get: {
+                parameters: {
+                  dates: [
+                    .[0].parameters.date,
+                    .[1].parameters.date
+                  ]
+                }
+              },
+              errors: (
+                [.[].errors] |
+                map(select(length > 0)) |
+                add // {}
+              ),
+              results: ([.[].results] | add),
+              response: ([.[].response] | add)
             }
-          },
-          errors: (
-            [.[].errors] |
-            map(select(length > 0)) |
-            add // {}
-          ),
-          results: ([.[].results] | add),
-          response: ([.[].response] | add)
-        }
-      ' football1.json football2.json > football.json
+          ' football1.json football2.json > football.json
 
-  - name: Get football predictions
-    env:
-      SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
-    run: |
-      echo '{"predictions":[]}' > football_predictions.json
+      - name: Get football predictions
+        env:
+          SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
+        run: |
+          echo '{"predictions":[]}' > football_predictions.json
 
-      jq -r '
-        .response[]
-        | select(.fixture.status.short == "NS")
-        | .fixture.id
-      ' football.json > football_ids.txt
+          jq -r '
+            .response[]
+            | select(.fixture.status.short == "NS")
+            | .fixture.id
+          ' football.json > football_ids.txt
 
-      while read -r FIXTURE_ID; do
+          while read -r FIXTURE_ID; do
 
-        [ -z "$FIXTURE_ID" ] && continue
+            [ -z "$FIXTURE_ID" ] && continue
 
-        curl -fsSL \
-          -H "x-apisports-key: $SPORTS_API_KEY" \
-          "https://v3.football.api-sports.io/predictions?fixture=$FIXTURE_ID" \
-          -o "prediction_$FIXTURE_ID.json" || true
+            curl -fsSL \
+              -H "x-apisports-key: $SPORTS_API_KEY" \
+              "https://v3.football.api-sports.io/predictions?fixture=$FIXTURE_ID" \
+              -o "prediction_$FIXTURE_ID.json" || true
 
-        sleep 0.2
+            sleep 0.2
 
-      done < football_ids.txt
+          done < football_ids.txt
 
-      jq -s '
-        {
-          predictions: [
-            .[]
-            | select(.response != null)
-            | .response[]
-          ]
-        }
-      ' prediction_*.json 2>/dev/null > football_predictions.json || \
-        echo '{"predictions":[]}' > football_predictions.json
+          shopt -s nullglob
+          prediction_files=(prediction_*.json)
 
-  - name: Get basketball matches
-    env:
-      SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
-    run: |
-      TODAY=$(date -u +%Y-%m-%d)
-      DAY2=$(date -u -d "+1 day" +%Y-%m-%d)
+          if [ ${#prediction_files[@]} -gt 0 ]; then
+            jq -s '
+              {
+                predictions: [
+                  .[]
+                  | select(.response != null)
+                  | .response[]
+                ]
+              }
+            ' "${prediction_files[@]}" > football_predictions.json
+          fi
 
-      curl -fsSL \
-        -H "x-apisports-key: $SPORTS_API_KEY" \
-        "https://v1.basketball.api-sports.io/games?date=$TODAY" \
-        -o basketball1.json
+      - name: Get basketball matches
+        env:
+          SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          DAY2=$(date -u -d "+1 day" +%Y-%m-%d)
 
-      curl -fsSL \
-        -H "x-apisports-key: $SPORTS_API_KEY" \
-        "https://v1.basketball.api-sports.io/games?date=$DAY2" \
-        -o basketball2.json
+          curl -fsSL \
+            -H "x-apisports-key: $SPORTS_API_KEY" \
+            "https://v1.basketball.api-sports.io/games?date=$TODAY" \
+            -o basketball1.json
 
-      jq -s '
-        {
-          get: {
-            parameters: {
-              dates: [
-                .[0].parameters.date,
-                .[1].parameters.date
-              ]
+          curl -fsSL \
+            -H "x-apisports-key: $SPORTS_API_KEY" \
+            "https://v1.basketball.api-sports.io/games?date=$DAY2" \
+            -o basketball2.json
+
+          jq -s '
+            {
+              get: {
+                parameters: {
+                  dates: [
+                    .[0].parameters.date,
+                    .[1].parameters.date
+                  ]
+                }
+              },
+              errors: (
+                [.[].errors] |
+                map(select(length > 0)) |
+                add // {}
+              ),
+              results: ([.[].results] | add),
+              response: ([.[].response] | add)
             }
-          },
-          errors: (
-            [.[].errors] |
-            map(select(length > 0)) |
-            add // {}
-          ),
-          results: ([.[].results] | add),
-          response: ([.[].response] | add)
-        }
-      ' basketball1.json basketball2.json > basketball.json
+          ' basketball1.json basketball2.json > basketball.json
 
-  - name: Save update time
-    run: |
-      echo "{\"updated\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > update.json
+      - name: Save update time
+        run: |
+          echo "{\"updated\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > update.json
 
-  - name: Save match data
-    run: |
-      git config user.name "SUBBY PREDICTION"
-      git config user.email "actions@github.com"
+      - name: Save match data
+        run: |
+          git config user.name "SUBBY PREDICTION"
+          git config user.email "actions@github.com"
 
-      git add football.json
-      git add football_predictions.json
-      git add basketball.json
-      git add update.json
+          git add football.json
+          git add football_predictions.json
+          git add basketball.json
+          git add update.json
 
-      git diff --cached --quiet || git commit -m "Update SUBBY match data and predictions"
+          git diff --cached --quiet || git commit -m "Update SUBBY match data and predictions"
 
-      git push
+          git push
