@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>SUBBY PREDICTION 🏀⚽️</title>
 
 <style>
@@ -19,25 +20,26 @@ body {
 
 header {
   text-align: center;
-  padding: 25px 15px;
+  padding: 28px 15px;
   background: linear-gradient(135deg, #111827, #0b1220);
   border-bottom: 1px solid #263044;
 }
 
 header h1 {
   margin: 0;
-  font-size: 28px;
+  font-size: 29px;
 }
 
 header p {
   color: #9ca3af;
-  margin: 8px 0 0;
+  margin: 9px 0 0;
+  font-size: 15px;
 }
 
 .status {
-  margin: 15px auto;
-  max-width: 900px;
-  padding: 10px;
+  max-width: 1000px;
+  margin: auto;
+  padding: 15px;
   text-align: center;
   color: #9ca3af;
   font-size: 13px;
@@ -47,7 +49,7 @@ header p {
   display: flex;
   justify-content: center;
   gap: 8px;
-  padding: 15px;
+  padding: 12px 15px 20px;
   flex-wrap: wrap;
 }
 
@@ -55,8 +57,9 @@ header p {
   background: #151c2b;
   color: white;
   border: 1px solid #303b52;
-  border-radius: 20px;
-  padding: 10px 18px;
+  border-radius: 25px;
+  padding: 11px 20px;
+  font-size: 14px;
   cursor: pointer;
 }
 
@@ -68,7 +71,14 @@ header p {
 #matches {
   max-width: 1000px;
   margin: auto;
-  padding: 10px 15px 40px;
+  padding: 5px 15px 40px;
+}
+
+.day-title {
+  margin: 25px 0 12px;
+  font-size: 19px;
+  font-weight: bold;
+  color: #60a5fa;
 }
 
 .card {
@@ -85,22 +95,27 @@ header p {
   font-weight: bold;
 }
 
-.date {
-  color: #9ca3af;
+.match-date {
+  color: #d1d5db;
   font-size: 13px;
-  margin-top: 5px;
+  margin-top: 7px;
+}
+
+.match-time {
+  color: #facc15;
+  font-weight: bold;
 }
 
 .teams {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 15px;
-  margin: 18px 0;
+  gap: 12px;
+  margin: 19px 0;
 }
 
 .team {
-  width: 42%;
+  width: 43%;
   font-size: 17px;
   font-weight: bold;
 }
@@ -112,29 +127,30 @@ header p {
 .vs {
   color: #6b7280;
   font-size: 12px;
+  font-weight: bold;
 }
 
 .prediction {
   background: #0b1220;
   border-radius: 12px;
-  padding: 14px;
+  padding: 15px;
   text-align: center;
 }
 
 .prediction-title {
   color: #facc15;
-  font-weight: bold;
   font-size: 13px;
+  font-weight: bold;
 }
 
 .pick {
-  font-size: 22px;
+  font-size: 21px;
   font-weight: bold;
-  margin-top: 7px;
+  margin-top: 8px;
 }
 
 .confidence {
-  margin-top: 10px;
+  margin-top: 12px;
   height: 7px;
   background: #263044;
   border-radius: 10px;
@@ -149,29 +165,54 @@ header p {
 .meta {
   display: flex;
   justify-content: space-between;
-  margin-top: 10px;
+  margin-top: 9px;
   color: #9ca3af;
-  font-size: 12px;
-}
-
-.empty {
-  text-align: center;
-  padding: 50px 15px;
-  color: #9ca3af;
-}
-
-footer {
-  text-align: center;
-  padding: 25px;
-  color: #6b7280;
-  border-top: 1px solid #202938;
   font-size: 12px;
 }
 
 .loading {
   text-align: center;
-  padding: 50px;
+  padding: 55px 15px;
   color: #60a5fa;
+}
+
+.empty {
+  text-align: center;
+  padding: 55px 15px;
+  color: #9ca3af;
+}
+
+.error-box {
+  background: #241316;
+  border: 1px solid #6b2630;
+  color: #fca5a5;
+  border-radius: 12px;
+  padding: 18px;
+  margin: 20px 0;
+  text-align: center;
+  line-height: 1.6;
+}
+
+footer {
+  text-align: center;
+  padding: 30px 15px;
+  color: #6b7280;
+  border-top: 1px solid #202938;
+  font-size: 12px;
+}
+
+.responsible {
+  max-width: 750px;
+  margin: 20px auto 0;
+  padding: 18px;
+  border-top: 1px solid #263044;
+  line-height: 1.7;
+  color: #8f98aa;
+  font-size: 12px;
+}
+
+.responsible strong {
+  color: #facc15;
 }
 </style>
 </head>
@@ -184,22 +225,57 @@ footer {
 </header>
 
 <div class="status" id="status">
-  Loading upcoming matches...
+  Loading upcoming matches 🔄
 </div>
 
 <div class="filters">
-  <button class="active" onclick="filterMatches('all', this)">All</button>
-  <button onclick="filterMatches('football', this)">⚽ Football</button>
-  <button onclick="filterMatches('basketball', this)">🏀 Basketball</button>
+  <button class="active" onclick="filterMatches('all', this)">
+    All
+  </button>
+
+  <button onclick="filterMatches('football', this)">
+    ⚽ Football
+  </button>
+
+  <button onclick="filterMatches('basketball', this)">
+    🏀 Basketball
+  </button>
 </div>
 
 <div id="matches">
-  <div class="loading">Loading matches 🔄</div>
+  <div class="loading">
+    Loading matches 🔄
+  </div>
 </div>
 
 <footer>
-  🏀⚽️ SUBBY PREDICTION<br>
+
+  🏀⚽️ <strong>SUBBY PREDICTION</strong><br>
   Automated upcoming match feed
+
+  <div class="responsible">
+
+    🔞 <strong>18+ | BET RESPONSIBLY</strong>
+
+    <br><br>
+
+    SUBBY PREDICTION provides sports predictions
+    for informational and entertainment purposes only.
+
+    <br><br>
+
+    Predictions are estimates and are
+    <strong>not guaranteed</strong>.
+    No prediction can be 100% certain, and past performance
+    does not guarantee future results.
+
+    <br><br>
+
+    If you choose to bet, only bet what you can afford to lose.
+    Please bet responsibly.
+
+  </div>
+
 </footer>
 
 <script>
@@ -207,293 +283,691 @@ footer {
 let allMatches = [];
 let currentFilter = "all";
 
-/* Convert date to Nigeria/Lagos time */
-function formatDate(dateString) {
-  const date = new Date(dateString);
+
+/* =========================
+   NIGERIAN DATE & TIME
+========================= */
+
+function getNigeriaDate(dateString) {
 
   return new Intl.DateTimeFormat("en-NG", {
     timeZone: "Africa/Lagos",
-    weekday: "short",
+    weekday: "long",
     day: "2-digit",
     month: "short",
     year: "numeric"
-  }).format(date);
+  }).format(new Date(dateString));
+
 }
 
-function formatTime(dateString) {
-  const date = new Date(dateString);
+
+function getNigeriaTime(dateString) {
 
   return new Intl.DateTimeFormat("en-NG", {
     timeZone: "Africa/Lagos",
     hour: "2-digit",
     minute: "2-digit",
     hour12: true
-  }).format(date);
+  }).format(new Date(dateString));
+
 }
 
-/*
-  Creates a consistent prediction from the team names.
-  This is a simple SUBBY prediction algorithm,
-  not a guarantee of the match result.
-*/
+
+/* =========================
+   TODAY / TOMORROW
+========================= */
+
+function getDayLabel(dateString) {
+
+  const eventDate = new Date(dateString);
+
+  const nigeriaFormatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Africa/Lagos",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  });
+
+  const eventDay = nigeriaFormatter.format(eventDate);
+
+  const now = new Date();
+
+  const today = nigeriaFormatter.format(now);
+
+  const tomorrowDate = new Date(
+    now.getTime() + 24 * 60 * 60 * 1000
+  );
+
+  const tomorrow = nigeriaFormatter.format(tomorrowDate);
+
+  if (eventDay === today) {
+    return "🔥 TODAY";
+  }
+
+  if (eventDay === tomorrow) {
+    return "📅 TOMORROW";
+  }
+
+  return getNigeriaDate(dateString);
+}
+
+
+/* =========================
+   SUBBY PREDICTION
+========================= */
+
 function makePrediction(home, away, sport) {
 
-  let text = home + away;
+  const text = home + "|" + away;
+
   let score = 0;
 
   for (let i = 0; i < text.length; i++) {
     score += text.charCodeAt(i);
   }
 
+
   if (sport === "football") {
 
     const result = score % 3;
 
     if (result === 0) {
+
       return {
         pick: "🏠 " + home + " WIN",
-        confidence: 70 + (score % 15)
+        confidence: 68 + (score % 13)
       };
+
     }
 
     if (result === 1) {
+
       return {
         pick: "🤝 DRAW",
-        confidence: 65 + (score % 15)
+        confidence: 65 + (score % 12)
       };
+
     }
 
     return {
       pick: "✈️ " + away + " WIN",
-      confidence: 70 + (score % 15)
+      confidence: 68 + (score % 13)
     };
   }
+
 
   const result = score % 2;
 
   if (result === 0) {
+
     return {
       pick: "🏠 " + home + " WIN",
-      confidence: 72 + (score % 15)
+      confidence: 70 + (score % 13)
     };
+
   }
 
   return {
     pick: "✈️ " + away + " WIN",
-    confidence: 72 + (score % 15)
+    confidence: 70 + (score % 13)
   };
+
 }
 
-/* Load football + basketball data */
+
+/* =========================
+   LOAD SPORTS DATA
+========================= */
+
 async function loadMatches() {
 
   try {
 
-    const [footballResponse, basketballResponse] = await Promise.all([
-      fetch("football.json?t=" + Date.now()),
-      fetch("basketball.json?t=" + Date.now())
+    const footballURL =
+      "football.json?update=" + Date.now();
+
+    const basketballURL =
+      "basketball.json?update=" + Date.now();
+
+
+    const [
+      footballResponse,
+      basketballResponse
+    ] = await Promise.all([
+
+      fetch(footballURL),
+
+      fetch(basketballURL)
+
     ]);
 
-    const footballData = await footballResponse.json();
-    const basketballData = await basketballResponse.json();
+
+    if (!footballResponse.ok) {
+
+      throw new Error(
+        "football.json could not be loaded"
+      );
+
+    }
+
+
+    if (!basketballResponse.ok) {
+
+      throw new Error(
+        "basketball.json could not be loaded"
+      );
+
+    }
+
+
+    const footballData =
+      await footballResponse.json();
+
+    const basketballData =
+      await basketballResponse.json();
+
 
     let matches = [];
 
-    /* FOOTBALL */
 
-    if (footballData.response) {
+    /* =========================
+       FOOTBALL
+    ========================= */
+
+    if (
+      footballData &&
+      Array.isArray(footballData.response)
+    ) {
 
       footballData.response.forEach(item => {
 
-        if (!item.fixture || !item.teams) return;
+        const home =
+          item?.teams?.home?.name;
 
-        const home = item.teams.home?.name;
-        const away = item.teams.away?.name;
-        const date = item.fixture.date;
+        const away =
+          item?.teams?.away?.name;
 
-        if (!home || !away || !date) return;
+        const date =
+          item?.fixture?.date;
+
+        const status =
+          item?.fixture?.status?.short;
+
+
+        if (!home || !away || !date) {
+          return;
+        }
+
+
+        /*
+          Only upcoming football matches.
+        */
+
+        const eventTime =
+          new Date(date).getTime();
+
+        const now =
+          Date.now();
+
+
+        const finishedStatuses = [
+          "FT",
+          "AET",
+          "PEN",
+          "CANC",
+          "PST",
+          "ABD",
+          "AWD",
+          "WO"
+        ];
+
+
+        if (eventTime <= now) {
+          return;
+        }
+
+
+        if (finishedStatuses.includes(status)) {
+          return;
+        }
+
 
         matches.push({
+
           sport: "football",
+
           icon: "⚽",
-          league: item.league?.name || "Football",
+
+          league:
+            item?.league?.name ||
+            "Football",
+
           home: home,
+
           away: away,
+
           date: date
+
         });
 
       });
+
     }
 
-    /* BASKETBALL */
 
-    if (basketballData.response) {
+    /* =========================
+       BASKETBALL
+    ========================= */
+
+    if (
+      basketballData &&
+      Array.isArray(basketballData.response)
+    ) {
 
       basketballData.response.forEach(item => {
 
-        const home = item.teams?.home?.name;
-        const away = item.teams?.away?.name;
-        const date = item.date;
+        const home =
+          item?.teams?.home?.name;
 
-        if (!home || !away || !date) return;
+        const away =
+          item?.teams?.away?.name;
+
+        const date =
+          item?.date;
+
+
+        if (!home || !away || !date) {
+          return;
+        }
+
+
+        const eventTime =
+          new Date(date).getTime();
+
+        const now =
+          Date.now();
+
+
+        /*
+          Only upcoming basketball matches.
+        */
+
+        if (eventTime <= now) {
+          return;
+        }
+
 
         matches.push({
+
           sport: "basketball",
+
           icon: "🏀",
-          league: item.league?.name || "Basketball",
+
+          league:
+            item?.league?.name ||
+            "Basketball",
+
           home: home,
+
           away: away,
+
           date: date
+
         });
 
       });
+
     }
 
-    const now = new Date();
 
-    /* Only upcoming matches */
-    matches = matches.filter(match => {
-      return new Date(match.date) >= now;
+    /*
+      Remove duplicate matches.
+    */
+
+    const unique = new Map();
+
+
+    matches.forEach(match => {
+
+      const key =
+        match.sport +
+        "|" +
+        match.home +
+        "|" +
+        match.away +
+        "|" +
+        match.date;
+
+      unique.set(key, match);
+
     });
 
-    /* Sort by event time */
+
+    matches =
+      Array.from(unique.values());
+
+
+    /*
+      Sort by event time.
+    */
+
     matches.sort((a, b) => {
-      return new Date(a.date) - new Date(b.date);
+
+      return new Date(a.date) -
+             new Date(b.date);
+
     });
+
 
     allMatches = matches;
 
-    document.getElementById("status").innerHTML =
-      "🔥 " + matches.length +
-      " upcoming matches • Times shown in Nigeria time 🇳🇬";
+
+    if (matches.length === 0) {
+
+      document.getElementById("status").innerHTML =
+        "⚠️ No upcoming matches were returned by the sports feed.";
+
+    } else {
+
+      document.getElementById("status").innerHTML =
+        "🔥 " +
+        matches.length +
+        " upcoming matches • 🇳🇬 Nigeria time";
+
+    }
+
 
     displayMatches();
 
+
   } catch (error) {
 
-    console.log(error);
+    console.error(error);
+
 
     document.getElementById("status").innerHTML =
       "⚠️ Unable to load matches right now.";
 
+
     document.getElementById("matches").innerHTML = `
-      <div class="empty">
-        No matches available right now.<br><br>
-        Please refresh the page.
+
+      <div class="error-box">
+
+        ⚠️ <strong>Match feed unavailable</strong>
+
+        <br><br>
+
+        The website could not read the latest
+        football and basketball data.
+
+        <br><br>
+
+        Please refresh the page shortly.
+
       </div>
+
     `;
+
   }
+
 }
 
-/* Display matches */
+
+/* =========================
+   DISPLAY MATCHES
+========================= */
 
 function displayMatches() {
 
-  const container = document.getElementById("matches");
+  const container =
+    document.getElementById("matches");
+
 
   let matches = allMatches;
 
+
   if (currentFilter !== "all") {
-    matches = matches.filter(match => match.sport === currentFilter);
+
+    matches =
+      matches.filter(
+        match =>
+          match.sport === currentFilter
+      );
+
   }
+
 
   if (matches.length === 0) {
 
     container.innerHTML = `
+
       <div class="empty">
-        No upcoming matches found for this category.
+
+        No upcoming matches found
+        for this category.
+
       </div>
+
     `;
 
     return;
+
   }
 
-  container.innerHTML = matches.map((match, index) => {
 
-    const prediction =
-      makePrediction(match.home, match.away, match.sport);
+  /*
+    Group matches by day.
+  */
 
-    return `
-      <div class="card">
+  const groups = {};
 
-        <div class="league">
-          ${match.icon} ${match.league}
-        </div>
 
-        <div class="date">
-          📅 ${formatDate(match.date)}
-          &nbsp; • &nbsp;
-          ⏰ ${formatTime(match.date)}
-        </div>
+  matches.forEach(match => {
 
-        <div class="teams">
+    const formatter =
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Africa/Lagos",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit"
+      });
 
-          <div class="team">
-            ${match.home}
-          </div>
 
-          <div class="vs">
-            VS
-          </div>
+    const day =
+      formatter.format(
+        new Date(match.date)
+      );
 
-          <div class="team right">
-            ${match.away}
-          </div>
 
-        </div>
+    if (!groups[day]) {
+      groups[day] = [];
+    }
 
-        <div class="prediction">
 
-          <div class="prediction-title">
-            🤖 SUBBY PREDICTION
-          </div>
+    groups[day].push(match);
 
-          <div class="pick">
-            ${prediction.pick}
-          </div>
+  });
 
-          <div class="confidence">
-            <div
-              class="confidence-bar"
-              style="width:${prediction.confidence}%">
-            </div>
-          </div>
 
-          <div class="meta">
-            <span>Confidence</span>
-            <span>${prediction.confidence}%</span>
-          </div>
+  let html = "";
 
-        </div>
+
+  Object.keys(groups).forEach(day => {
+
+    const dayMatches =
+      groups[day];
+
+
+    html += `
+
+      <div class="day-title">
+
+        ${getDayLabel(dayMatches[0].date)}
 
       </div>
+
     `;
 
-  }).join("");
+
+    dayMatches.forEach(match => {
+
+      const prediction =
+        makePrediction(
+          match.home,
+          match.away,
+          match.sport
+        );
+
+
+      html += `
+
+        <div class="card">
+
+          <div class="league">
+
+            ${match.icon}
+            ${match.league}
+
+          </div>
+
+
+          <div class="match-date">
+
+            📅 ${getNigeriaDate(match.date)}
+
+            <br>
+
+            ⏰
+            <span class="match-time">
+              ${getNigeriaTime(match.date)}
+            </span>
+
+            🇳🇬
+
+          </div>
+
+
+          <div class="teams">
+
+            <div class="team">
+
+              ${match.home}
+
+            </div>
+
+
+            <div class="vs">
+
+              VS
+
+            </div>
+
+
+            <div class="team right">
+
+              ${match.away}
+
+            </div>
+
+          </div>
+
+
+          <div class="prediction">
+
+            <div class="prediction-title">
+
+              🤖 SUBBY PREDICTION
+
+            </div>
+
+
+            <div class="pick">
+
+              ${prediction.pick}
+
+            </div>
+
+
+            <div class="confidence">
+
+              <div
+                class="confidence-bar"
+                style="width:${prediction.confidence}%"
+              ></div>
+
+            </div>
+
+
+            <div class="meta">
+
+              <span>
+                Prediction confidence
+              </span>
+
+              <span>
+                ${prediction.confidence}%
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      `;
+
+    });
+
+  });
+
+
+  container.innerHTML = html;
+
 }
 
-/* Filters */
+
+/* =========================
+   FILTERS
+========================= */
 
 function filterMatches(filter, button) {
 
   currentFilter = filter;
 
-  document.querySelectorAll(".filters button")
-    .forEach(btn => btn.classList.remove("active"));
+
+  document
+    .querySelectorAll(".filters button")
+    .forEach(btn => {
+
+      btn.classList.remove("active");
+
+    });
+
 
   button.classList.add("active");
 
+
   displayMatches();
+
 }
 
-/* Start */
+
+/* =========================
+   START
+========================= */
 
 loadMatches();
 
+
 /*
-  Refresh the match files every 15 minutes.
+  Check for newly updated
+  match data every 15 minutes.
 */
-setInterval(loadMatches, 15 * 60 * 1000);
+
+setInterval(
+  loadMatches,
+  15 * 60 * 1000
+);
 
 </script>
 
