@@ -1,0 +1,47 @@
+name: Update SUBBY Predictions
+
+on:
+  schedule:
+    - cron: "0 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get repository
+        uses: actions/checkout@v4
+
+      - name: Get football matches
+        env:
+          SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
+        run: |
+          curl -fsSL \
+            -H "x-apisports-key: $SPORTS_API_KEY" \
+            "https://v3.football.api-sports.io/fixtures?next=50" \
+            -o football.json
+
+      - name: Get basketball matches
+        env:
+          SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
+        run: |
+          curl -fsSL \
+            -H "x-apisports-key: $SPORTS_API_KEY" \
+            "https://v1.basketball.api-sports.io/games?next=50" \
+            -o basketball.json
+
+      - name: Save update time
+        run: |
+          echo "{\"updated\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > update.json
+
+      - name: Save match data
+        run: |
+          git config user.name "SUBBY PREDICTION"
+          git config user.email "actions@github.com"
+          git add football.json basketball.json update.json
+          git diff --cached --quiet || git commit -m "Update SUBBY match data"
+          git push
