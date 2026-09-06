@@ -21,12 +21,44 @@ jobs:
           SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
         run: |
           TODAY=$(date -u +%Y-%m-%d)
-          END=$(date -u -d "+3 days" +%Y-%m-%d)
+          DAY2=$(date -u -d "+1 day" +%Y-%m-%d)
+          DAY3=$(date -u -d "+2 days" +%Y-%m-%d)
 
           curl -fsSL \
             -H "x-apisports-key: $SPORTS_API_KEY" \
-            "https://v3.football.api-sports.io/fixtures?from=$TODAY&to=$END" \
-            -o football.json
+            "https://v3.football.api-sports.io/fixtures?date=$TODAY" \
+            -o football1.json
+
+          curl -fsSL \
+            -H "x-apisports-key: $SPORTS_API_KEY" \
+            "https://v3.football.api-sports.io/fixtures?date=$DAY2" \
+            -o football2.json
+
+          curl -fsSL \
+            -H "x-apisports-key: $SPORTS_API_KEY" \
+            "https://v3.football.api-sports.io/fixtures?date=$DAY3" \
+            -o football3.json
+
+          jq -s '
+            {
+              get: {
+                parameters: {
+                  dates: [
+                    .[0].parameters.date,
+                    .[1].parameters.date,
+                    .[2].parameters.date
+                  ]
+                }
+              },
+              errors: (
+                [.[].errors] |
+                map(select(length > 0)) |
+                add // {}
+              ),
+              results: ([.[].results] | add),
+              response: ([.[].response] | add)
+            }
+          ' football1.json football2.json football3.json > football.json
 
       - name: Get basketball matches
         env:
