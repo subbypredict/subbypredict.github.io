@@ -1,312 +1,501 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUBBY PREDICTION 🏀⚽️</title>
 
-  <title>AI Football & Basketball Predictions</title>
+<style>
+* {
+  box-sizing: border-box;
+}
 
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #080b12;
+  color: white;
+}
 
-    body {
-      font-family: Arial, sans-serif;
-      background: #0b1020;
-      color: white;
-      min-height: 100vh;
-    }
+header {
+  text-align: center;
+  padding: 25px 15px;
+  background: linear-gradient(135deg, #111827, #0b1220);
+  border-bottom: 1px solid #263044;
+}
 
-    header {
-      background: #111936;
-      padding: 25px 15px;
-      text-align: center;
-      border-bottom: 1px solid #273158;
-    }
+header h1 {
+  margin: 0;
+  font-size: 28px;
+}
 
-    header h1 {
-      font-size: 28px;
-      margin-bottom: 8px;
-    }
+header p {
+  color: #9ca3af;
+  margin: 8px 0 0;
+}
 
-    header p {
-      color: #aeb8d8;
-      font-size: 14px;
-    }
+.status {
+  margin: 15px auto;
+  max-width: 900px;
+  padding: 10px;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 13px;
+}
 
-    .container {
-      width: 92%;
-      max-width: 900px;
-      margin: 25px auto;
-    }
+.filters {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 15px;
+  flex-wrap: wrap;
+}
 
-    .filters {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-bottom: 25px;
-    }
+.filters button {
+  background: #151c2b;
+  color: white;
+  border: 1px solid #303b52;
+  border-radius: 20px;
+  padding: 10px 18px;
+  cursor: pointer;
+}
 
-    .filters button {
-      border: none;
-      padding: 11px 20px;
-      border-radius: 25px;
-      background: #202a50;
-      color: white;
-      cursor: pointer;
-      font-size: 14px;
-    }
+.filters button.active {
+  background: #2563eb;
+  border-color: #2563eb;
+}
 
-    .filters button.active {
-      background: #4f7cff;
-    }
+#matches {
+  max-width: 1000px;
+  margin: auto;
+  padding: 10px 15px 40px;
+}
 
-    .prediction {
-      background: #121a35;
-      border: 1px solid #273158;
-      border-radius: 16px;
-      padding: 20px;
-      margin-bottom: 15px;
-    }
+.card {
+  background: #111827;
+  border: 1px solid #263044;
+  border-radius: 16px;
+  margin-bottom: 15px;
+  padding: 18px;
+}
 
-    .league {
-      color: #8fa5ff;
-      font-size: 13px;
-      margin-bottom: 12px;
-    }
+.league {
+  color: #60a5fa;
+  font-size: 13px;
+  font-weight: bold;
+}
 
-    .teams {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 10px;
-      font-size: 18px;
-      font-weight: bold;
-    }
+.date {
+  color: #9ca3af;
+  font-size: 13px;
+  margin-top: 5px;
+}
 
-    .vs {
-      color: #68739b;
-      font-size: 13px;
-    }
+.teams {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 15px;
+  margin: 18px 0;
+}
 
-    .prediction-box {
-      margin-top: 18px;
-      padding: 15px;
-      background: #0c1329;
-      border-radius: 12px;
-    }
+.team {
+  width: 42%;
+  font-size: 17px;
+  font-weight: bold;
+}
 
-    .prediction-box p {
-      margin: 7px 0;
-      color: #cbd3ee;
-    }
+.team.right {
+  text-align: right;
+}
 
-    .prediction-box strong {
-      color: white;
-    }
+.vs {
+  color: #6b7280;
+  font-size: 12px;
+}
 
-    .confidence {
-      margin-top: 12px;
-      font-size: 14px;
-    }
+.prediction {
+  background: #0b1220;
+  border-radius: 12px;
+  padding: 14px;
+  text-align: center;
+}
 
-    .bar {
-      height: 8px;
-      background: #252e50;
-      border-radius: 10px;
-      overflow: hidden;
-      margin-top: 7px;
-    }
+.prediction-title {
+  color: #facc15;
+  font-weight: bold;
+  font-size: 13px;
+}
 
-    .bar span {
-      display: block;
-      height: 100%;
-      background: #4f7cff;
-      border-radius: 10px;
-    }
+.pick {
+  font-size: 22px;
+  font-weight: bold;
+  margin-top: 7px;
+}
 
-    .empty {
-      text-align: center;
-      color: #8d97b8;
-      padding: 30px;
-    }
+.confidence {
+  margin-top: 10px;
+  height: 7px;
+  background: #263044;
+  border-radius: 10px;
+  overflow: hidden;
+}
 
-    footer {
-      text-align: center;
-      color: #68739b;
-      padding: 30px 15px;
-      font-size: 12px;
-    }
-  </style>
+.confidence-bar {
+  height: 100%;
+  background: #22c55e;
+}
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  color: #9ca3af;
+  font-size: 12px;
+}
+
+.empty {
+  text-align: center;
+  padding: 50px 15px;
+  color: #9ca3af;
+}
+
+footer {
+  text-align: center;
+  padding: 25px;
+  color: #6b7280;
+  border-top: 1px solid #202938;
+  font-size: 12px;
+}
+
+.loading {
+  text-align: center;
+  padding: 50px;
+  color: #60a5fa;
+}
+</style>
 </head>
 
 <body>
 
-  <header>
-    <h1>⚽🏀 AI Predictions</h1>
-    <p>Football & Basketball Match Predictions</p>
-  </header>
+<header>
+  <h1>🏀⚽️ SUBBY PREDICTION</h1>
+  <p>Football & Basketball Match Predictions</p>
+</header>
 
-  <div class="container">
+<div class="status" id="status">
+  Loading upcoming matches...
+</div>
 
-    <div class="filters">
-      <button class="active" onclick="filterPredictions('all', this)">All</button>
-      <button onclick="filterPredictions('football', this)">⚽ Football</button>
-      <button onclick="filterPredictions('basketball', this)">🏀 Basketball</button>
-    </div>
+<div class="filters">
+  <button class="active" onclick="filterMatches('all', this)">All</button>
+  <button onclick="filterMatches('football', this)">⚽ Football</button>
+  <button onclick="filterMatches('basketball', this)">🏀 Basketball</button>
+</div>
 
-    <div id="predictions"></div>
+<div id="matches">
+  <div class="loading">Loading matches 🔄</div>
+</div>
 
-  </div>
+<footer>
+  🏀⚽️ SUBBY PREDICTION<br>
+  Automated upcoming match feed
+</footer>
 
-  <footer>
-    AI Football & Basketball Predictions
-    <br>
-    Updated: <span id="time"></span>
-  </footer>
+<script>
 
-  <script>
-    const predictions = [
+let allMatches = [];
+let currentFilter = "all";
 
-      {
-        sport: "football",
-        league: "Premier League",
-        home: "Arsenal",
-        away: "Chelsea",
-        prediction: "Arsenal to Win",
-        score: "2 - 1",
-        confidence: 78
-      },
+/* Convert date to Nigeria/Lagos time */
+function formatDate(dateString) {
+  const date = new Date(dateString);
 
-      {
-        sport: "football",
-        league: "La Liga",
-        home: "Barcelona",
-        away: "Sevilla",
-        prediction: "Barcelona to Win",
-        score: "3 - 1",
-        confidence: 82
-      },
+  return new Intl.DateTimeFormat("en-NG", {
+    timeZone: "Africa/Lagos",
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  }).format(date);
+}
 
-      {
-        sport: "football",
-        league: "Serie A",
-        home: "Inter Milan",
-        away: "Roma",
-        prediction: "Inter Milan to Win",
-        score: "2 - 0",
-        confidence: 80
-      },
+function formatTime(dateString) {
+  const date = new Date(dateString);
 
-      {
-        sport: "football",
-        league: "Bundesliga",
-        home: "Bayern Munich",
-        away: "Dortmund",
-        prediction: "Bayern Munich to Win",
-        score: "3 - 2",
-        confidence: 76
-      },
+  return new Intl.DateTimeFormat("en-NG", {
+    timeZone: "Africa/Lagos",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: true
+  }).format(date);
+}
 
-      {
-        sport: "basketball",
-        league: "NBA",
-        home: "Los Angeles Lakers",
-        away: "Golden State Warriors",
-        prediction: "Lakers to Win",
-        score: "118 - 112",
-        confidence: 74
-      },
+/*
+  Creates a consistent prediction from the team names.
+  This is a simple SUBBY prediction algorithm,
+  not a guarantee of the match result.
+*/
+function makePrediction(home, away, sport) {
 
-      {
-        sport: "basketball",
-        league: "NBA",
-        home: "Boston Celtics",
-        away: "Miami Heat",
-        prediction: "Celtics to Win",
-        score: "115 - 106",
-        confidence: 81
-      }
+  let text = home + away;
+  let score = 0;
 
-    ];
+  for (let i = 0; i < text.length; i++) {
+    score += text.charCodeAt(i);
+  }
 
-    function displayPredictions(list) {
+  if (sport === "football") {
 
-      const container = document.getElementById("predictions");
+    const result = score % 3;
 
-      if (list.length === 0) {
-        container.innerHTML =
-          '<div class="empty">No predictions available.</div>';
-        return;
-      }
+    if (result === 0) {
+      return {
+        pick: "🏠 " + home + " WIN",
+        confidence: 70 + (score % 15)
+      };
+    }
 
-      container.innerHTML = list.map(match => `
+    if (result === 1) {
+      return {
+        pick: "🤝 DRAW",
+        confidence: 65 + (score % 15)
+      };
+    }
 
-        <div class="prediction">
+    return {
+      pick: "✈️ " + away + " WIN",
+      confidence: 70 + (score % 15)
+    };
+  }
 
-          <div class="league">
-            ${match.sport === "football" ? "⚽" : "🏀"}
-            ${match.league}
+  const result = score % 2;
+
+  if (result === 0) {
+    return {
+      pick: "🏠 " + home + " WIN",
+      confidence: 72 + (score % 15)
+    };
+  }
+
+  return {
+    pick: "✈️ " + away + " WIN",
+    confidence: 72 + (score % 15)
+  };
+}
+
+/* Load football + basketball data */
+async function loadMatches() {
+
+  try {
+
+    const [footballResponse, basketballResponse] = await Promise.all([
+      fetch("football.json?t=" + Date.now()),
+      fetch("basketball.json?t=" + Date.now())
+    ]);
+
+    const footballData = await footballResponse.json();
+    const basketballData = await basketballResponse.json();
+
+    let matches = [];
+
+    /* FOOTBALL */
+
+    if (footballData.response) {
+
+      footballData.response.forEach(item => {
+
+        if (!item.fixture || !item.teams) return;
+
+        const home = item.teams.home?.name;
+        const away = item.teams.away?.name;
+        const date = item.fixture.date;
+
+        if (!home || !away || !date) return;
+
+        matches.push({
+          sport: "football",
+          icon: "⚽",
+          league: item.league?.name || "Football",
+          home: home,
+          away: away,
+          date: date
+        });
+
+      });
+    }
+
+    /* BASKETBALL */
+
+    if (basketballData.response) {
+
+      basketballData.response.forEach(item => {
+
+        const home = item.teams?.home?.name;
+        const away = item.teams?.away?.name;
+        const date = item.date;
+
+        if (!home || !away || !date) return;
+
+        matches.push({
+          sport: "basketball",
+          icon: "🏀",
+          league: item.league?.name || "Basketball",
+          home: home,
+          away: away,
+          date: date
+        });
+
+      });
+    }
+
+    const now = new Date();
+
+    /* Only upcoming matches */
+    matches = matches.filter(match => {
+      return new Date(match.date) >= now;
+    });
+
+    /* Sort by event time */
+    matches.sort((a, b) => {
+      return new Date(a.date) - new Date(b.date);
+    });
+
+    allMatches = matches;
+
+    document.getElementById("status").innerHTML =
+      "🔥 " + matches.length +
+      " upcoming matches • Times shown in Nigeria time 🇳🇬";
+
+    displayMatches();
+
+  } catch (error) {
+
+    console.log(error);
+
+    document.getElementById("status").innerHTML =
+      "⚠️ Unable to load matches right now.";
+
+    document.getElementById("matches").innerHTML = `
+      <div class="empty">
+        No matches available right now.<br><br>
+        Please refresh the page.
+      </div>
+    `;
+  }
+}
+
+/* Display matches */
+
+function displayMatches() {
+
+  const container = document.getElementById("matches");
+
+  let matches = allMatches;
+
+  if (currentFilter !== "all") {
+    matches = matches.filter(match => match.sport === currentFilter);
+  }
+
+  if (matches.length === 0) {
+
+    container.innerHTML = `
+      <div class="empty">
+        No upcoming matches found for this category.
+      </div>
+    `;
+
+    return;
+  }
+
+  container.innerHTML = matches.map((match, index) => {
+
+    const prediction =
+      makePrediction(match.home, match.away, match.sport);
+
+    return `
+      <div class="card">
+
+        <div class="league">
+          ${match.icon} ${match.league}
+        </div>
+
+        <div class="date">
+          📅 ${formatDate(match.date)}
+          &nbsp; • &nbsp;
+          ⏰ ${formatTime(match.date)}
+        </div>
+
+        <div class="teams">
+
+          <div class="team">
+            ${match.home}
           </div>
 
-          <div class="teams">
-            <span>${match.home}</span>
-            <span class="vs">VS</span>
-            <span>${match.away}</span>
+          <div class="vs">
+            VS
           </div>
 
-          <div class="prediction-box">
-
-            <p>
-              <strong>Prediction:</strong>
-              ${match.prediction}
-            </p>
-
-            <p>
-              <strong>Expected Score:</strong>
-              ${match.score}
-            </p>
-
-            <div class="confidence">
-              <strong>Confidence:</strong>
-              ${match.confidence}%
-              <div class="bar">
-                <span style="width:${match.confidence}%"></span>
-              </div>
-            </div>
-
+          <div class="team right">
+            ${match.away}
           </div>
 
         </div>
 
-      `).join("");
-    }
+        <div class="prediction">
 
-    function filterPredictions(type, button) {
+          <div class="prediction-title">
+            🤖 SUBBY PREDICTION
+          </div>
 
-      document.querySelectorAll(".filters button")
-        .forEach(btn => btn.classList.remove("active"));
+          <div class="pick">
+            ${prediction.pick}
+          </div>
 
-      button.classList.add("active");
+          <div class="confidence">
+            <div
+              class="confidence-bar"
+              style="width:${prediction.confidence}%">
+            </div>
+          </div>
 
-      if (type === "all") {
-        displayPredictions(predictions);
-      } else {
-        displayPredictions(
-          predictions.filter(match => match.sport === type)
-        );
-      }
-    }
+          <div class="meta">
+            <span>Confidence</span>
+            <span>${prediction.confidence}%</span>
+          </div>
 
-    document.getElementById("time").textContent =
-      new Date().toLocaleString();
+        </div>
 
-    displayPredictions(predictions);
-  </script>
+      </div>
+    `;
+
+  }).join("");
+}
+
+/* Filters */
+
+function filterMatches(filter, button) {
+
+  currentFilter = filter;
+
+  document.querySelectorAll(".filters button")
+    .forEach(btn => btn.classList.remove("active"));
+
+  button.classList.add("active");
+
+  displayMatches();
+}
+
+/* Start */
+
+loadMatches();
+
+/*
+  Refresh the match files every 15 minutes.
+*/
+setInterval(loadMatches, 15 * 60 * 1000);
+
+</script>
 
 </body>
 </html>
