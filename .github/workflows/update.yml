@@ -13,7 +13,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-steps:
   - name: Get repository
     uses: actions/checkout@v4
 
