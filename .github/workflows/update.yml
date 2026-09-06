@@ -20,19 +20,57 @@ jobs:
         env:
           SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
         run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          END=$(date -u -d "+3 days" +%Y-%m-%d)
+
           curl -fsSL \
             -H "x-apisports-key: $SPORTS_API_KEY" \
-            "https://v3.football.api-sports.io/fixtures?next=50" \
+            "https://v3.football.api-sports.io/fixtures?from=$TODAY&to=$END" \
             -o football.json
 
       - name: Get basketball matches
         env:
           SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
         run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          DAY2=$(date -u -d "+1 day" +%Y-%m-%d)
+          DAY3=$(date -u -d "+2 days" +%Y-%m-%d)
+
           curl -fsSL \
             -H "x-apisports-key: $SPORTS_API_KEY" \
-            "https://v1.basketball.api-sports.io/games?next=50" \
-            -o basketball.json
+            "https://v1.basketball.api-sports.io/games?date=$TODAY" \
+            -o basketball1.json
+
+          curl -fsSL \
+            -H "x-apisports-key: $SPORTS_API_KEY" \
+            "https://v1.basketball.api-sports.io/games?date=$DAY2" \
+            -o basketball2.json
+
+          curl -fsSL \
+            -H "x-apisports-key: $SPORTS_API_KEY" \
+            "https://v1.basketball.api-sports.io/games?date=$DAY3" \
+            -o basketball3.json
+
+          jq -s '
+            {
+              get: {
+                parameters: {
+                  dates: [
+                    .[0].parameters.date,
+                    .[1].parameters.date,
+                    .[2].parameters.date
+                  ]
+                }
+              },
+              errors: (
+                [.[].errors] |
+                map(select(length > 0)) |
+                add // {}
+              ),
+              results: ([.[].results] | add),
+              response: ([.[].response] | add)
+            }
+          ' basketball1.json basketball2.json basketball3.json > basketball.json
 
       - name: Save update time
         run: |
