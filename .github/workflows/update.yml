@@ -2,7 +2,7 @@ name: Update SUBBY Predictions
 
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 /6 * * "
   workflow_dispatch:
 
 permissions:
@@ -31,11 +31,11 @@ jobs:
           SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
         run: |
           if [ -z "$SPORTS_API_KEY" ]; then
-            echo "ERROR: SPORTS_API_KEY secret is missing."
+            echo "ERROR: SPORTS_API_KEY is missing."
             exit 1
           fi
 
-          echo "API key detected."
+          echo "SPORTS_API_KEY detected."
 
 
       # =====================================================
@@ -55,62 +55,76 @@ jobs:
 
 
       # =====================================================
-      # FOOTBALL MATCHES
+      # FOOTBALL FIXTURES
       # =====================================================
 
-      - name: Get football matches
+      - name: Get upcoming football matches
         env:
           SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
         run: |
 
           set -e
 
-          echo "Getting football matches..."
+          curl -fsSL 
+            --retry 3 
+            --retry-delay 2 
+            -H "x-apisports-key: $SPORTS_API_KEY" 
+            -H "Accept: application/json" 
+            "https://v3.football.api-sports.io/fixtures?date=$TODAY" 
+            -o football_today.json
 
-          curl -fsSL \
-            --retry 3 \
-            --retry-delay 2 \
-            -H "x-apisports-key: $SPORTS_API_KEY" \
-            -H "Accept: application/json" \
-            "https://v3.football.api-sports.io/fixtures?date=$TODAY" \
-            -o football1.json
-
-          curl -fsSL \
-            --retry 3 \
-            --retry-delay 2 \
-            -H "x-apisports-key: $SPORTS_API_KEY" \
-            -H "Accept: application/json" \
-            "https://v3.football.api-sports.io/fixtures?date=$TOMORROW" \
-            -o football2.json
+          curl -fsSL 
+            --retry 3 
+            --retry-delay 2 
+            -H "x-apisports-key: $SPORTS_API_KEY" 
+            -H "Accept: application/json" 
+            "https://v3.football.api-sports.io/fixtures?date=$TOMORROW" 
+            -o football_tomorrow.json
 
           jq -s '
             {
               get: "fixtures",
+
               parameters: {
                 dates: [
                   .[0].parameters.date,
                   .[1].parameters.date
                 ]
               },
+
               errors: (
                 [.[].errors // {}]
                 | map(select(length > 0))
                 | add // {}
               ),
+
               results: (
-                [.[].results // 0]
+                [.[].response // []]
                 | add
+                | map(
+                    select(
+                      .fixture.status.short == "NS"
+                      or .fixture.status.short == "TBD"
+                    )
+                  )
+                | length
               ),
+
               response: (
                 [.[].response // []]
                 | add
+                | map(
+                    select(
+                      .fixture.status.short == "NS"
+                      or .fixture.status.short == "TBD"
+                    )
+                  )
                 | unique_by(.fixture.id)
               )
             }
-          ' football1.json football2.json > football.json
+          ' football_today.json football_tomorrow.json > football.json
 
-          echo "Football matches saved."
-
+          echo "Upcoming football matches:"
           jq '.results' football.json
 
 
@@ -125,57 +139,42 @@ jobs:
 
           set -e
 
-          echo "Getting football predictions..."
-
-          echo '{
-            "predictions": []
-          }' > football_predictions.json
+          echo '{"updated":"","predictions":[]}' > football_predictions.json
 
           jq -r '
             .response[]
-            | select(
-                .fixture.status.short == "NS"
-                or .fixture.status.short == "TBD"
-              )
             | .fixture.id
           ' football.json > football_ids.txt
 
           while read -r FIXTURE_ID; do
 
-            if [ -z "$FIXTURE_ID" ]; then
-              continue
-            fi
+            [ -z "$FIXTURE_ID" ] && continue
 
-            echo "Getting prediction for fixture $FIXTURE_ID"
+            echo "Getting football prediction: $FIXTURE_ID"
 
-            curl -fsSL \
-              --retry 2 \
-              --retry-delay 2 \
-              -H "x-apisports-key: $SPORTS_API_KEY" \
-              -H "Accept: application/json" \
-              "https://v3.football.api-sports.io/predictions?fixture=$FIXTURE_ID" \
-              -o "prediction_${FIXTURE_ID}.json" || {
+            curl -fsSL 
+              --retry 3 
+              --retry-delay 2 
+              -H "x-apisports-key: $SPORTS_API_KEY" 
+              -H "Accept: application/json" 
+              "https://v3.football.api-sports.io/predictions?fixture=$FIXTURE_ID" 
+              -o "football_prediction_$FIXTURE_ID.json" || true
 
-                echo "Prediction failed for fixture $FIXTURE_ID"
-
-                continue
-              }
-
-            sleep 1
+            sleep 0.5
 
           done < football_ids.txt
 
 
           shopt -s nullglob
 
-          prediction_files=(prediction_*.json)
+          files=(football_prediction_.json)
 
 
-          if [ ${#prediction_files[@]} -gt 0 ]; then
+          if [ ${#files[@]} -gt 0 ]; then
 
-            jq -s '
+            jq -s --arg updated "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '
               {
-                updated: now | todateiso8601,
+                updated: $updated,
 
                 predictions: [
                   .[]
@@ -190,45 +189,41 @@ jobs:
                     }
                 ]
               }
-            ' "${prediction_files[@]}" \
-            > football_predictions.json
+            ' "${files[@]}" > football_predictions.json
 
           fi
 
 
-          echo "Football predictions saved."
-
+          echo "Football predictions:"
           jq '.predictions | length' football_predictions.json
 
 
       # =====================================================
-      # BASKETBALL MATCHES
+      # BASKETBALL FIXTURES
       # =====================================================
 
-      - name: Get basketball matches
+      - name: Get upcoming basketball matches
         env:
           SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
         run: |
 
           set -e
 
-          echo "Getting basketball matches..."
+          curl -fsSL 
+            --retry 3 
+            --retry-delay 2 
+            -H "x-apisports-key: $SPORTS_API_KEY" 
+            -H "Accept: application/json" 
+            "https://v1.basketball.api-sports.io/games?date=$TODAY" 
+            -o basketball_today.json
 
-          curl -fsSL \
-            --retry 3 \
-            --retry-delay 2 \
-            -H "x-apisports-key: $SPORTS_API_KEY" \
-            -H "Accept: application/json" \
-            "https://v1.basketball.api-sports.io/games?date=$TODAY" \
-            -o basketball1.json
-
-          curl -fsSL \
-            --retry 3 \
-            --retry-delay 2 \
-            -H "x-apisports-key: $SPORTS_API_KEY" \
-            -H "Accept: application/json" \
-            "https://v1.basketball.api-sports.io/games?date=$TOMORROW" \
-            -o basketball2.json
+          curl -fsSL 
+            --retry 3 
+            --retry-delay 2 
+            -H "x-apisports-key: $SPORTS_API_KEY" 
+            -H "Accept: application/json" 
+            "https://v1.basketball.api-sports.io/games?date=$TOMORROW" 
+            -o basketball_tomorrow.json
 
 
           jq -s '
@@ -249,59 +244,473 @@ jobs:
               ),
 
               results: (
-                [.[].results // 0]
+                [.[].response // []]
                 | add
+                | map(
+                    select(
+                      (.status.short // "")
+                      | ascii_upcase
+                      | IN(
+                          "NS",
+                          "TBD",
+                          "SCHEDULED"
+                        )
+                    )
+                  )
+                | length
               ),
 
               response: (
                 [.[].response // []]
                 | add
+                | map(
+                    select(
+                      (.status.short // "")
+                      | ascii_upcase
+                      | IN(
+                          "NS",
+                          "TBD",
+                          "SCHEDULED"
+                        )
+                    )
+                  )
                 | unique_by(.id)
               )
             }
-          ' basketball1.json basketball2.json \
-          > basketball.json
+          ' basketball_today.json basketball_tomorrow.json > basketball.json
 
 
-          echo "Basketball matches saved."
-
+          echo "Upcoming basketball matches:"
           jq '.results' basketball.json
 
 
       # =====================================================
-      # BASKETBALL PREDICTION DATA
+      # BASKETBALL FORM PREDICTIONS
       # =====================================================
 
-      - name: Prepare basketball prediction data
+      - name: Build basketball predictions
+        env:
+          SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
         run: |
 
           set -e
 
-          echo "Preparing basketball prediction data..."
+          echo "Building basketball predictions..."
 
-          jq '
-            {
-              updated: now | todateiso8601,
+          cat > build_basketball_predictions.py <<'PY'
+          import json
+          import os
+          import subprocess
+          import urllib.request
+          import urllib.error
 
-              predictions: [
-                .response[]
-                | {
-                    id: .id,
-                    date: .date,
-                    timezone: .timezone,
-                    league: .league,
-                    country: .country,
-                    teams: .teams,
-                    scores: .scores,
-                    status: .status
+          API_KEY = os.environ["SPORTS_API_KEY"]
+
+          BASE = "https://v1.basketball.api-sports.io"
+
+          HEADERS = {
+              "x-apisports-key": API_KEY,
+              "Accept": "application/json"
+          }
+
+
+          def api_get(path):
+              request = urllib.request.Request(
+                  BASE + path,
+                  headers=HEADERS
+              )
+
+              try:
+                  with urllib.request.urlopen(
+                      request,
+                      timeout=30
+                  ) as response:
+
+                      return json.loads(
+                          response.read().decode("utf-8")
+                      )
+
+              except Exception as error:
+
+                  print(
+                      "API error:",
+                      path,
+                      error
+                  )
+
+                  return {}
+
+
+          with open(
+              "basketball.json",
+              "r",
+              encoding="utf-8"
+          ) as file:
+
+              basketball = json.load(file)
+
+
+          upcoming = basketball.get(
+              "response",
+              []
+          )
+
+
+          predictions = []
+
+
+          for game in upcoming:
+
+              game_id = game.get("id")
+
+              home = game.get(
+                  "teams",
+                  {}
+              ).get(
+                  "home",
+                  {}
+              )
+
+              away = game.get(
+                  "teams",
+                  {}
+              ).get(
+                  "away",
+                  {}
+              )
+
+
+              home_id = home.get("id")
+              away_id = away.get("id")
+
+
+              if not home_id or not away_id:
+                  continue
+
+
+              print(
+                  f"Analysing {home.get('name')} vs {away.get('name')}"
+              )
+
+
+              home_data = api_get(
+                  f"/games?team={home_id}&last=5"
+              )
+
+              away_data = api_get(
+                  f"/games?team={away_id}&last=5"
+              )
+
+
+              home_games = home_data.get(
+                  "response",
+                  []
+              )
+
+              away_games = away_data.get(
+                  "response",
+                  []
+              )
+
+
+              def calculate_form(
+                  games,
+                  team_id
+              ):
+
+                  wins = 0
+                  losses = 0
+                  points_for = 0
+                  points_against = 0
+                  counted = 0
+
+
+                  for match in games:
+
+                      status = str(
+                          match.get(
+                              "status",
+                              {}
+                          ).get(
+                              "short",
+                              ""
+                          )
+                      ).upper()
+
+
+                      if status not in [
+                          "FT",
+                          "AOT",
+                          "FINAL"
+                      ]:
+                          continue
+
+
+                      teams = match.get(
+                          "teams",
+                          {}
+                      )
+
+                      scores = match.get(
+                          "scores",
+                          {}
+                      )
+
+
+                      home_team = teams.get(
+                          "home",
+                          {}
+                      )
+
+                      away_team = teams.get(
+                          "away",
+                          {}
+                      )
+
+
+                      home_score = (
+                          scores.get(
+                              "home",
+                              {}
+                          ).get(
+                              "total"
+                          )
+                      )
+
+                      away_score = (
+                          scores.get(
+                              "away",
+                              {}
+                          ).get(
+                              "total"
+                          )
+                      )
+
+
+                      if (
+                          home_score is None
+                          or
+                          away_score is None
+                      ):
+                          continue
+
+
+                      counted += 1
+
+
+                      if str(
+                          home_team.get("id")
+                      ) == str(team_id):
+
+                          scored = home_score
+                          conceded = away_score
+
+                      else:
+
+                          scored = away_score
+                          conceded = home_score
+
+
+                      points_for += scored
+                      points_against += conceded
+
+
+                      if scored > conceded:
+                          wins += 1
+                      else:
+                          losses += 1
+
+
+                  if counted == 0:
+
+                      return {
+                          "wins": 0,
+                          "losses": 0,
+                          "average_for": 0,
+                          "average_against": 0,
+                          "games": 0
+                      }
+
+
+                  return {
+                      "wins": wins,
+                      "losses": losses,
+                      "average_for": round(
+                          points_for / counted,
+                          1
+                      ),
+                      "average_against": round(
+                          points_against / counted,
+                          1
+                      ),
+                      "games": counted
                   }
-              ]
-            }
-          ' basketball.json \
-          > basketball_predictions.json
 
 
-          echo "Basketball prediction data saved."
+              home_form = calculate_form(
+                  home_games,
+                  home_id
+              )
+
+              away_form = calculate_form(
+                  away_games,
+                  away_id
+              )
+
+
+              if (
+                  home_form["games"] == 0
+                  and
+                  away_form["games"] == 0
+              ):
+
+                  continue
+
+
+              home_strength = (
+                  home_form["wins"] * 2
+                  +
+                  home_form["average_for"] / 10
+                  -
+                  home_form["average_against"] / 20
+                  +
+                  1
+              )
+
+
+              away_strength = (
+                  away_form["wins"] * 2
+                  +
+                  away_form["average_for"] / 10
+                  -
+                  away_form["average_against"] / 20
+              )
+
+
+              total_strength = (
+                  home_strength +
+                  away_strength
+              )
+
+
+              if total_strength <= 0:
+                  continue
+
+
+              home_probability = round(
+                  (
+                      home_strength /
+                      total_strength
+                  ) * 100
+              )
+
+
+              away_probability = (
+                  100 -
+                  home_probability
+              )
+
+
+              if home_probability >= 55:
+
+                  pick = home.get(
+                      "name",
+                      "Home"
+                  )
+
+                  confidence = home_probability
+
+              elif away_probability >= 55:
+
+                  pick = away.get(
+                      "name",
+                      "Away"
+                  )
+
+                  confidence = away_probability
+
+              else:
+
+                  pick = "Close game"
+
+                  confidence = max(
+                      home_probability,
+                      away_probability
+                  )
+
+
+              predictions.append({
+
+                  "game": {
+                      "id": game_id,
+                      "date": game.get("date"),
+                      "teams": game.get("teams"),
+                      "league": game.get("league")
+                  },
+
+                  "prediction": {
+
+                      "pick": pick,
+
+                      "confidence": confidence,
+
+                      "home_probability":
+                          home_probability,
+
+                      "away_probability":
+                          away_probability
+
+                  },
+
+                  "form": {
+
+                      "home": home_form,
+
+                      "away": away_form
+
+                  }
+
+              })
+
+
+          output = {
+
+              "updated":
+                  import(
+                      "datetime"
+                  ).datetime.now(
+                      import(
+                          "datetime"
+                      ).timezone.utc
+                  ).isoformat(),
+
+              "predictions":
+                  predictions
+
+          }
+
+
+          with open(
+              "basketball_predictions.json",
+              "w",
+              encoding="utf-8"
+          ) as file:
+
+              json.dump(
+                  output,
+                  file,
+                  indent=2
+              )
+
+
+          print(
+              f"Created {len(predictions)} basketball predictions."
+          )
+
+          PY
+
+
+          python3 build_basketball_predictions.py
 
 
       # =====================================================
@@ -320,25 +729,29 @@ jobs:
 
 
       # =====================================================
-      # CLEAN TEMPORARY FILES
+      # CLEAN TEMP FILES
       # =====================================================
 
       - name: Clean temporary files
         run: |
 
-          rm -f football1.json
-          rm -f football2.json
-          rm -f basketball1.json
-          rm -f basketball2.json
+          rm -f football_today.json
+          rm -f football_tomorrow.json
           rm -f football_ids.txt
-          rm -f prediction_*.json
+
+          rm -f basketball_today.json
+          rm -f basketball_tomorrow.json
+
+          rm -f football_prediction_.json
+
+          rm -f build_basketball_predictions.py
 
 
       # =====================================================
-      # SAVE TO GITHUB
+      # COMMIT
       # =====================================================
 
-      - name: Save match data
+      - name: Save updated data
         run: |
 
           git config user.name "SUBBY PREDICTION"
@@ -356,8 +769,8 @@ jobs:
 
           else
 
-            git commit \
-              -m "Update SUBBY match data and predictions"
+            git commit 
+              -m "Update upcoming matches and predictions"
 
             git push
 
