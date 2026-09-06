@@ -1,1 +1,1 @@
-{"get":"fixtures","parameters":{"next":"50"},"errors":{"plan":"Free plans do not have access to the Next parameter."},"results":0,"paging":{"current":1,"total":1},"response":[]}
+{"get":"fixtures","parameters":{"from":"2026-09-06","to":"2026-09-09"},"errors":{"from":"The From field need another parameter.","to":"The To field need another parameter."},"results":0,"paging":{"current":1,"total":1},"response":[]}
