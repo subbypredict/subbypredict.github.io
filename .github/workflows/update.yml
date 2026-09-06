@@ -13,137 +13,352 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
+      # =====================================================
+      # CHECKOUT
+      # =====================================================
+
       - name: Get repository
         uses: actions/checkout@v4
+
+
+      # =====================================================
+      # CHECK API KEY
+      # =====================================================
+
+      - name: Check API key
+        env:
+          SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
+        run: |
+          if [ -z "$SPORTS_API_KEY" ]; then
+            echo "ERROR: SPORTS_API_KEY secret is missing."
+            exit 1
+          fi
+
+          echo "API key detected."
+
+
+      # =====================================================
+      # DATE SETUP
+      # =====================================================
+
+      - name: Set dates
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          TOMORROW=$(date -u -d "+1 day" +%Y-%m-%d)
+
+          echo "TODAY=$TODAY" >> "$GITHUB_ENV"
+          echo "TOMORROW=$TOMORROW" >> "$GITHUB_ENV"
+
+          echo "Today: $TODAY"
+          echo "Tomorrow: $TOMORROW"
+
+
+      # =====================================================
+      # FOOTBALL MATCHES
+      # =====================================================
 
       - name: Get football matches
         env:
           SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
         run: |
-          TODAY=$(date -u +%Y-%m-%d)
-          DAY2=$(date -u -d "+1 day" +%Y-%m-%d)
+
+          set -e
+
+          echo "Getting football matches..."
 
           curl -fsSL \
+            --retry 3 \
+            --retry-delay 2 \
             -H "x-apisports-key: $SPORTS_API_KEY" \
+            -H "Accept: application/json" \
             "https://v3.football.api-sports.io/fixtures?date=$TODAY" \
             -o football1.json
 
           curl -fsSL \
+            --retry 3 \
+            --retry-delay 2 \
             -H "x-apisports-key: $SPORTS_API_KEY" \
-            "https://v3.football.api-sports.io/fixtures?date=$DAY2" \
+            -H "Accept: application/json" \
+            "https://v3.football.api-sports.io/fixtures?date=$TOMORROW" \
             -o football2.json
 
           jq -s '
             {
-              get: {
-                parameters: {
-                  dates: [
-                    .[0].parameters.date,
-                    .[1].parameters.date
-                  ]
-                }
+              get: "fixtures",
+              parameters: {
+                dates: [
+                  .[0].parameters.date,
+                  .[1].parameters.date
+                ]
               },
               errors: (
-                [.[].errors] |
-                map(select(length > 0)) |
-                add // {}
+                [.[].errors // {}]
+                | map(select(length > 0))
+                | add // {}
               ),
-              results: ([.[].results] | add),
-              response: ([.[].response] | add)
+              results: (
+                [.[].results // 0]
+                | add
+              ),
+              response: (
+                [.[].response // []]
+                | add
+                | unique_by(.fixture.id)
+              )
             }
           ' football1.json football2.json > football.json
+
+          echo "Football matches saved."
+
+          jq '.results' football.json
+
+
+      # =====================================================
+      # FOOTBALL PREDICTIONS
+      # =====================================================
 
       - name: Get football predictions
         env:
           SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
         run: |
-          echo '{"predictions":[]}' > football_predictions.json
+
+          set -e
+
+          echo "Getting football predictions..."
+
+          echo '{
+            "predictions": []
+          }' > football_predictions.json
 
           jq -r '
             .response[]
-            | select(.fixture.status.short == "NS")
+            | select(
+                .fixture.status.short == "NS"
+                or .fixture.status.short == "TBD"
+              )
             | .fixture.id
           ' football.json > football_ids.txt
 
           while read -r FIXTURE_ID; do
 
-            [ -z "$FIXTURE_ID" ] && continue
+            if [ -z "$FIXTURE_ID" ]; then
+              continue
+            fi
+
+            echo "Getting prediction for fixture $FIXTURE_ID"
 
             curl -fsSL \
+              --retry 2 \
+              --retry-delay 2 \
               -H "x-apisports-key: $SPORTS_API_KEY" \
+              -H "Accept: application/json" \
               "https://v3.football.api-sports.io/predictions?fixture=$FIXTURE_ID" \
-              -o "prediction_$FIXTURE_ID.json" || true
+              -o "prediction_${FIXTURE_ID}.json" || {
 
-            sleep 0.2
+                echo "Prediction failed for fixture $FIXTURE_ID"
+
+                continue
+              }
+
+            sleep 1
 
           done < football_ids.txt
 
+
           shopt -s nullglob
+
           prediction_files=(prediction_*.json)
 
+
           if [ ${#prediction_files[@]} -gt 0 ]; then
+
             jq -s '
               {
+                updated: now | todateiso8601,
+
                 predictions: [
                   .[]
-                  | select(.response != null)
-                  | .response[]
+                  | .response[]?
+                  | {
+                      fixture: .fixture,
+                      league: .league,
+                      teams: .teams,
+                      predictions: .predictions,
+                      comparison: .comparison,
+                      h2h: .h2h
+                    }
                 ]
               }
-            ' "${prediction_files[@]}" > football_predictions.json
+            ' "${prediction_files[@]}" \
+            > football_predictions.json
+
           fi
+
+
+          echo "Football predictions saved."
+
+          jq '.predictions | length' football_predictions.json
+
+
+      # =====================================================
+      # BASKETBALL MATCHES
+      # =====================================================
 
       - name: Get basketball matches
         env:
           SPORTS_API_KEY: ${{ secrets.SPORTS_API_KEY }}
         run: |
-          TODAY=$(date -u +%Y-%m-%d)
-          DAY2=$(date -u -d "+1 day" +%Y-%m-%d)
+
+          set -e
+
+          echo "Getting basketball matches..."
 
           curl -fsSL \
+            --retry 3 \
+            --retry-delay 2 \
             -H "x-apisports-key: $SPORTS_API_KEY" \
+            -H "Accept: application/json" \
             "https://v1.basketball.api-sports.io/games?date=$TODAY" \
             -o basketball1.json
 
           curl -fsSL \
+            --retry 3 \
+            --retry-delay 2 \
             -H "x-apisports-key: $SPORTS_API_KEY" \
-            "https://v1.basketball.api-sports.io/games?date=$DAY2" \
+            -H "Accept: application/json" \
+            "https://v1.basketball.api-sports.io/games?date=$TOMORROW" \
             -o basketball2.json
+
 
           jq -s '
             {
-              get: {
-                parameters: {
-                  dates: [
-                    .[0].parameters.date,
-                    .[1].parameters.date
-                  ]
-                }
+              get: "games",
+
+              parameters: {
+                dates: [
+                  .[0].parameters.date,
+                  .[1].parameters.date
+                ]
               },
+
               errors: (
-                [.[].errors] |
-                map(select(length > 0)) |
-                add // {}
+                [.[].errors // {}]
+                | map(select(length > 0))
+                | add // {}
               ),
-              results: ([.[].results] | add),
-              response: ([.[].response] | add)
+
+              results: (
+                [.[].results // 0]
+                | add
+              ),
+
+              response: (
+                [.[].response // []]
+                | add
+                | unique_by(.id)
+              )
             }
-          ' basketball1.json basketball2.json > basketball.json
+          ' basketball1.json basketball2.json \
+          > basketball.json
+
+
+          echo "Basketball matches saved."
+
+          jq '.results' basketball.json
+
+
+      # =====================================================
+      # BASKETBALL PREDICTION DATA
+      # =====================================================
+
+      - name: Prepare basketball prediction data
+        run: |
+
+          set -e
+
+          echo "Preparing basketball prediction data..."
+
+          jq '
+            {
+              updated: now | todateiso8601,
+
+              predictions: [
+                .response[]
+                | {
+                    id: .id,
+                    date: .date,
+                    timezone: .timezone,
+                    league: .league,
+                    country: .country,
+                    teams: .teams,
+                    scores: .scores,
+                    status: .status
+                  }
+              ]
+            }
+          ' basketball.json \
+          > basketball_predictions.json
+
+
+          echo "Basketball prediction data saved."
+
+
+      # =====================================================
+      # UPDATE TIME
+      # =====================================================
 
       - name: Save update time
         run: |
-          echo "{\"updated\":\"$(date -u +%Y-%m-%dT%H:%M:%SZ)\"}" > update.json
+
+          cat > update.json <<EOF
+          {
+            "updated": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+            "timezone": "UTC"
+          }
+          EOF
+
+
+      # =====================================================
+      # CLEAN TEMPORARY FILES
+      # =====================================================
+
+      - name: Clean temporary files
+        run: |
+
+          rm -f football1.json
+          rm -f football2.json
+          rm -f basketball1.json
+          rm -f basketball2.json
+          rm -f football_ids.txt
+          rm -f prediction_*.json
+
+
+      # =====================================================
+      # SAVE TO GITHUB
+      # =====================================================
 
       - name: Save match data
         run: |
+
           git config user.name "SUBBY PREDICTION"
           git config user.email "actions@github.com"
 
           git add football.json
           git add football_predictions.json
           git add basketball.json
+          git add basketball_predictions.json
           git add update.json
 
-          git diff --cached --quiet || git commit -m "Update SUBBY match data and predictions"
+          if git diff --cached --quiet; then
 
-          git push
+            echo "No changes to commit."
+
+          else
+
+            git commit \
+              -m "Update SUBBY match data and predictions"
+
+            git push
+
+          fi
