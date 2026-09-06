@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>AI Football & Basketball Predictions</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b1020;
+      color: white;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #111936;
+      padding: 25px 15px;
+      text-align: center;
+      border-bottom: 1px solid #273158;
+    }
+
+    header h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    header p {
+      color: #aeb8d8;
+      font-size: 14px;
+    }
+
+    .container {
+      width: 92%;
+      max-width: 900px;
+      margin: 25px auto;
+    }
+
+    .filters {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-bottom: 25px;
+    }
+
+    .filters button {
+      border: none;
+      padding: 11px 20px;
+      border-radius: 25px;
+      background: #202a50;
+      color: white;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .filters button.active {
+      background: #4f7cff;
+    }
+
+    .prediction {
+      background: #121a35;
+      border: 1px solid #273158;
+      border-radius: 16px;
+      padding: 20px;
+      margin-bottom: 15px;
+    }
+
+    .league {
+      color: #8fa5ff;
+      font-size: 13px;
+      margin-bottom: 12px;
+    }
+
+    .teams {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 18px;
+      font-weight: bold;
+    }
+
+    .vs {
+      color: #68739b;
+      font-size: 13px;
+    }
+
+    .prediction-box {
+      margin-top: 18px;
+      padding: 15px;
+      background: #0c1329;
+      border-radius: 12px;
+    }
+
+    .prediction-box p {
+      margin: 7px 0;
+      color: #cbd3ee;
+    }
+
+    .prediction-box strong {
+      color: white;
+    }
+
+    .confidence {
+      margin-top: 12px;
+      font-size: 14px;
+    }
+
+    .bar {
+      height: 8px;
+      background: #252e50;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 7px;
+    }
+
+    .bar span {
+      display: block;
+      height: 100%;
+      background: #4f7cff;
+      border-radius: 10px;
+    }
+
+    .empty {
+      text-align: center;
+      color: #8d97b8;
+      padding: 30px;
+    }
+
+    footer {
+      text-align: center;
+      color: #68739b;
+      padding: 30px 15px;
+      font-size: 12px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h1>⚽🏀 AI Predictions</h1>
+    <p>Football & Basketball Match Predictions</p>
+  </header>
+
+  <div class="container">
+
+    <div class="filters">
+      <button class="active" onclick="filterPredictions('all', this)">All</button>
+      <button onclick="filterPredictions('football', this)">⚽ Football</button>
+      <button onclick="filterPredictions('basketball', this)">🏀 Basketball</button>
+    </div>
+
+    <div id="predictions"></div>
+
+  </div>
+
+  <footer>
+    AI Football & Basketball Predictions
+    <br>
+    Updated: <span id="time"></span>
+  </footer>
+
+  <script>
+    const predictions = [
+
+      {
+        sport: "football",
+        league: "Premier League",
+        home: "Arsenal",
+        away: "Chelsea",
+        prediction: "Arsenal to Win",
+        score: "2 - 1",
+        confidence: 78
+      },
+
+      {
+        sport: "football",
+        league: "La Liga",
+        home: "Barcelona",
+        away: "Sevilla",
+        prediction: "Barcelona to Win",
+        score: "3 - 1",
+        confidence: 82
+      },
+
+      {
+        sport: "football",
+        league: "Serie A",
+        home: "Inter Milan",
+        away: "Roma",
+        prediction: "Inter Milan to Win",
+        score: "2 - 0",
+        confidence: 80
+      },
+
+      {
+        sport: "football",
+        league: "Bundesliga",
+        home: "Bayern Munich",
+        away: "Dortmund",
+        prediction: "Bayern Munich to Win",
+        score: "3 - 2",
+        confidence: 76
+      },
+
+      {
+        sport: "basketball",
+        league: "NBA",
+        home: "Los Angeles Lakers",
+        away: "Golden State Warriors",
+        prediction: "Lakers to Win",
+        score: "118 - 112",
+        confidence: 74
+      },
+
+      {
+        sport: "basketball",
+        league: "NBA",
+        home: "Boston Celtics",
+        away: "Miami Heat",
+        prediction: "Celtics to Win",
+        score: "115 - 106",
+        confidence: 81
+      }
+
+    ];
+
+    function displayPredictions(list) {
+
+      const container = document.getElementById("predictions");
+
+      if (list.length === 0) {
+        container.innerHTML =
+          '<div class="empty">No predictions available.</div>';
+        return;
+      }
+
+      container.innerHTML = list.map(match => `
+
+        <div class="prediction">
+
+          <div class="league">
+            ${match.sport === "football" ? "⚽" : "🏀"}
+            ${match.league}
+          </div>
+
+          <div class="teams">
+            <span>${match.home}</span>
+            <span class="vs">VS</span>
+            <span>${match.away}</span>
+          </div>
+
+          <div class="prediction-box">
+
+            <p>
+              <strong>Prediction:</strong>
+              ${match.prediction}
+            </p>
+
+            <p>
+              <strong>Expected Score:</strong>
+              ${match.score}
+            </p>
+
+            <div class="confidence">
+              <strong>Confidence:</strong>
+              ${match.confidence}%
+              <div class="bar">
+                <span style="width:${match.confidence}%"></span>
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      `).join("");
+    }
+
+    function filterPredictions(type, button) {
+
+      document.querySelectorAll(".filters button")
+        .forEach(btn => btn.classList.remove("active"));
+
+      button.classList.add("active");
+
+      if (type === "all") {
+        displayPredictions(predictions);
+      } else {
+        displayPredictions(
+          predictions.filter(match => match.sport === type)
+        );
+      }
+    }
+
+    document.getElementById("time").textContent =
+      new Date().toLocaleString();
+
+    displayPredictions(predictions);
+  </script>
+
+</body>
+</html>
